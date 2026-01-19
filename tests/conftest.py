@@ -19,9 +19,11 @@ except ImportError as e:
 
 
 @pytest.fixture
-def watchlist():
+def watchlist(tmp_path):
     """Create a fresh watchlist for each test"""
-    wl = Watchlist(name="Test Watchlist")
+    # Use a temporary database path for each test
+    db_path = tmp_path / "test_watchlist.db"
+    wl = Watchlist(name="Test Watchlist", db_path=str(db_path))
     
     # Add default test items using add_item() parameters
     wl.add_item(

@@ -6,19 +6,21 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
-from watchlist.watchlist import Watchlist, AssetClass, WatchlistCategory
+from watchlist.watchlist import Watchlist, AssetClass, WatchlistCategory, WatchlistItem
 
 
-def test_watchlist_creation():
+def test_watchlist_creation(tmp_path):
     """Test watchlist creation"""
-    watchlist = Watchlist(name="Test Watchlist")
+    db_path = tmp_path / "test.db"
+    watchlist = Watchlist(name="Test Watchlist", db_path=str(db_path))
     assert watchlist.name == "Test Watchlist"
     assert len(watchlist.get_all()) == 0
 
 
-def test_add_item():
+def test_add_item(tmp_path):
     """Test adding item to watchlist"""
-    watchlist = Watchlist(name="Test")
+    db_path = tmp_path / "test.db"
+    watchlist = Watchlist(name="Test", db_path=str(db_path))
     
     item = watchlist.add_item(
         symbol="AAPL",
@@ -35,9 +37,10 @@ def test_add_item():
     assert len(watchlist.get_all()) == 1
 
 
-def test_remove_item():
+def test_remove_item(tmp_path):
     """Test removing item from watchlist"""
-    watchlist = Watchlist(name="Test")
+    db_path = tmp_path / "test.db"
+    watchlist = Watchlist(name="Test", db_path=str(db_path))
     watchlist.add_item(
         symbol="AAPL",
         name="Apple Inc.",
@@ -50,9 +53,10 @@ def test_remove_item():
     assert len(watchlist.get_all()) == 0
 
 
-def test_update_price():
+def test_update_price(tmp_path):
     """Test updating item price"""
-    watchlist = Watchlist(name="Test")
+    db_path = tmp_path / "test.db"
+    watchlist = Watchlist(name="Test", db_path=str(db_path))
     watchlist.add_item(
         symbol="AAPL",
         name="Apple Inc.",
@@ -64,9 +68,10 @@ def test_update_price():
     assert item.current_price == 155.0
 
 
-def test_get_by_category():
+def test_get_by_category(tmp_path):
     """Test filtering by category"""
-    watchlist = Watchlist(name="Test")
+    db_path = tmp_path / "test.db"
+    watchlist = Watchlist(name="Test", db_path=str(db_path))
     
     watchlist.add_item("AAPL", "Apple", AssetClass.STOCK, WatchlistCategory.MOMENTUM)
     watchlist.add_item("MSFT", "Microsoft", AssetClass.STOCK, WatchlistCategory.GROWTH)
@@ -95,9 +100,10 @@ def test_get_by_asset_class(watchlist):
     assert len(bonds) == 1  # BND
 
 
-def test_tags():
+def test_tags(tmp_path):
     """Test tag functionality"""
-    watchlist = Watchlist(name="Test")
+    db_path = tmp_path / "test.db"
+    watchlist = Watchlist(name="Test", db_path=str(db_path))
     watchlist.add_item(
         symbol="AAPL",
         name="Apple Inc.",

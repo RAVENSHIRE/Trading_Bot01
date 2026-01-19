@@ -12,6 +12,7 @@ class AssetClass(Enum):
     """Asset class types"""
     STOCK = "STOCK"
     ETF = "ETF"
+    BOND = "BOND"
     CRYPTO = "CRYPTO"
     FOREX = "FOREX"
     FUTURES = "FUTURES"
@@ -24,6 +25,7 @@ class WatchlistCategory(Enum):
     VALUE = "VALUE"
     GROWTH = "GROWTH"
     DIVIDEND = "DIVIDEND"
+    INCOME = "INCOME"
     TECHNICAL = "TECHNICAL"
     FUNDAMENTAL = "FUNDAMENTAL"
     CUSTOM = "CUSTOM"
@@ -36,7 +38,7 @@ class WatchlistItem:
     name: str
     asset_class: AssetClass
     category: WatchlistCategory
-    added_date: datetime
+    added_date: Optional[datetime] = None
     current_price: Optional[float] = None
     target_price: Optional[float] = None
     stop_loss: Optional[float] = None
@@ -46,6 +48,8 @@ class WatchlistItem:
     def __post_init__(self):
         if self.tags is None:
             self.tags = []
+        if self.added_date is None:
+            self.added_date = datetime.now()
 
 
 class Watchlist:
@@ -79,24 +83,43 @@ class Watchlist:
             conn.execute("CREATE INDEX IF NOT EXISTS idx_category ON watchlist(category)")
             conn.execute("CREATE INDEX IF NOT EXISTS idx_asset_class ON watchlist(asset_class)")
     
-    def add_item(self, symbol: str, name: str, asset_class: AssetClass,
-                 category: WatchlistCategory, target_price: Optional[float] = None,
+    def add_item(self, symbol_or_item=None, name: str = None, asset_class: AssetClass = None,
+                 category: WatchlistCategory = None, target_price: Optional[float] = None,
                  stop_loss: Optional[float] = None, notes: str = "", 
-                 tags: Optional[List[str]] = None) -> WatchlistItem:
-        """Add item to watchlist"""
-        item = WatchlistItem(
-            symbol=symbol,
-            name=name,
-            asset_class=asset_class,
-            category=category,
-            added_date=datetime.now(),
-            target_price=target_price,
-            stop_loss=stop_loss,
-            notes=notes,
-            tags=tags or []
-        )
+                 tags: Optional[List[str]] = None, symbol: str = None) -> WatchlistItem:
+        """Add item to watchlist
         
-        self.items[symbol] = item
+        Can be called in three ways:
+        1. add_item(WatchlistItem(...)) - pass a WatchlistItem object
+        2. add_item('AAPL', name='Apple', ...) - pass symbol as positional arg
+        3. add_item(symbol='AAPL', name='Apple', ...) - pass symbol as keyword arg
+        """
+        # Check if first argument is a WatchlistItem object
+        if isinstance(symbol_or_item, WatchlistItem):
+            item = symbol_or_item
+            # Ensure added_date is set
+            if not hasattr(item, 'added_date') or item.added_date is None:
+                item.added_date = datetime.now()
+        else:
+            # Determine symbol from either positional or keyword argument
+            symbol_value = symbol_or_item if symbol_or_item is not None else symbol
+            if symbol_value is None:
+                raise ValueError("Either pass a WatchlistItem object or provide a symbol")
+            
+            # Create new WatchlistItem from parameters
+            item = WatchlistItem(
+                symbol=symbol_value,
+                name=name,
+                asset_class=asset_class,
+                category=category,
+                added_date=datetime.now(),
+                target_price=target_price,
+                stop_loss=stop_loss,
+                notes=notes,
+                tags=tags or []
+            )
+        
+        self.items[item.symbol] = item
         self._save_item(item)
         return item
     
